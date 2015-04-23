@@ -6,7 +6,7 @@
 -- You can write comments in this file by starting them with two dashes, like
 -- these lines here.
 
-
+-- Not used by in any of the tests, but useful for displaying tournament results by a friendly name
 CREATE TABLE TournamentNames (
     Id serial primary key,
     TournamentName text

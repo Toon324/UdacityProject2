@@ -24,20 +24,32 @@ Database = connect();
 """
 
 def deleteMatches(tournamentId):
-    """Remove all the match records from the database."""
+    """Remove all the match records from the database.
+
+    Args:
+        tournamentId: The id of the tournament you would like to manipulate
+    """
     cursor = Database.cursor()
     cursor.execute("DELETE FROM PlayerResults WHERE TournamentId = %s", str(tournamentId))
     cursor.close()
 
 
 def deletePlayers(tournamentId):
-    """Remove all the player records from the database."""
+    """Remove all the player records from the database.
+
+    Args:
+        tournamentId: The id of the tournament you would like to manipulate
+    """
     cursor = Database.cursor()
     cursor.execute("DELETE FROM PlayerResults WHERE TournamentId = %s", str(tournamentId))
     cursor.close()
 
 def countPlayers(tournamentId):
-    """Returns the number of players currently registered."""
+    """Returns the number of players currently registered.
+
+    Args:
+        tournamentId: The id of the tournament you would like to manipulate
+    """
     cursor = Database.cursor()
     cursor.execute("SELECT COUNT(*) FROM PlayerResults WHERE TournamentId = %s", str(tournamentId))
 
@@ -55,7 +67,8 @@ def registerPlayer(tournamentId, name):
     should be handled by your SQL database schema, not in your Python code.)
 
     Args:
-      name: the player's full name (need not be unique).
+        name: the player's full name (need not be unique).
+        tournamentId: The id of the tournament you would like to manipulate
     """
 
     cursor = Database.cursor()
@@ -67,12 +80,30 @@ def registerPlayer(tournamentId, name):
     cursor.execute("INSERT INTO PlayerResults (TournamentId, PlayerId, Wins, Losses, Ties) VALUES (" + str(tournamentId) + ", " + str(playerId) + ", 0, 0, 0)")
     cursor.close()
 
+def createTournament(name):
+    """Adds a new tournament to the database.
+
+    The id in this table is used across the rest of the code to reference which tournament methods are being called on.
+
+    This method does not have to be called for the other methods to work, but is useful, as it registers an user-friendly name for the touramentId.
+
+    Args:
+        name: the name of the tournament
+        tournamentId: The id of the tournament you would like to manipulate
+    """
+
+    cursor = Database.cursor()
+    cursor.execute("INSERT INTO TournamentNames (TournamentName) VALUES (%s)", (bleach.clean(name),))
+    cursor.close()
 
 def playerStandings(tournamentId):
     """Returns a list of the players and their win records, sorted by wins.
 
     The first entry in the list should be the player in first place, or a player
     tied for first place if there is currently a tie.
+
+    Args:
+        tournamentId: The id of the tournament you would like to manipulate
 
     Returns:
       A list of tuples, each of which contains (id, name, wins, matches):
@@ -95,8 +126,9 @@ def reportMatch(tournamentId, winner, loser):
     """Records the outcome of a single match between two players.
 
     Args:
-      winner:  the id number of the player who won
-      loser:  the id number of the player who lost
+        tournamentId: The id of the tournament you would like to manipulate
+        winner:  the id number of the player who won
+        loser:  the id number of the player who lost
     """
     cursor = Database.cursor()
     cursor.execute("UPDATE PlayerResults SET Wins = Wins+1 WHERE TournamentId = " + str(tournamentId) + " AND PlayerId = " + str(winner))
@@ -110,6 +142,9 @@ def swissPairings(tournamentId):
     appears exactly once in the pairings.  Each player is paired with another
     player with an equal or nearly-equal win record, that is, a player adjacent
     to him or her in the standings.
+
+    Args:
+        tournamentId: The id of the tournament you would like to manipulate
 
     Returns:
       A list of tuples, each of which contains (id1, name1, id2, name2)
