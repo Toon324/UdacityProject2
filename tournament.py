@@ -13,11 +13,11 @@ def connect():
 ##Database
 Database = connect();
 
-""" 'But wait, these methods are the same!' A note on database design
+""" A note on database design
 
     To most effictively implement multi-tournament records, a table that contained a reference to tournament and player, along with Win/Loss/Tie stats was created.
     The list of all players registered is stored in the PlayerName table, which links ID to Name. Clearing a tournament's players shouldn't remove ALL players,
-    and a player may wish to enter future tournaments without re-registering, so we leave this table unaltered.
+    and a player may wish to enter future tournaments without re-registering, so we leave the records in PlayerName untouched.
 
     A record in PlayerResults that matches tournamentId represents that a player is part of a tournament. This is created as 0/0/0 for W/L/T.
     Therefore, since keeping track of players in a tournament and their matches are the same record, these methods do the same thing.
@@ -30,7 +30,7 @@ def deleteMatches(tournamentId):
         tournamentId: The id of the tournament you would like to manipulate
     """
     cursor = Database.cursor()
-    cursor.execute("DELETE FROM PlayerResults WHERE TournamentId = %s", str(tournamentId))
+    cursor.execute("UPDATE PlayerResults SET Wins = 0, Losses =0, TotalMatches = 0 WHERE TournamentId = " + str(tournamentId))
     cursor.close()
 
 
@@ -77,7 +77,7 @@ def registerPlayer(tournamentId, name):
 
     playerId = cursor.fetchall()[0][0]
 
-    cursor.execute("INSERT INTO PlayerResults (TournamentId, PlayerId, Wins, Losses, Ties) VALUES (" + str(tournamentId) + ", " + str(playerId) + ", 0, 0, 0)")
+    cursor.execute("INSERT INTO PlayerResults (TournamentId, PlayerId, Wins, Losses, TotalMatches) VALUES (" + str(tournamentId) + ", " + str(playerId) + ", 0, 0, 0)")
     cursor.close()
 
 def createTournament(name):
@@ -114,8 +114,7 @@ def playerStandings(tournamentId):
     """
     cursor = Database.cursor()
 
-    """The table supports Wins, Losses, and Ties. We use COALESCE to add these numbers up to get the total number of games, to save on Database space"""
-    cursor.execute("SELECT PlayerId, PlayerName, Wins, COALESCE(Wins,0) + COALESCE(Losses, 0) + COALESCE(Ties, 0) FROM TournamentResults WHERE TournamentId = %s", str(tournamentId))
+    cursor.execute("SELECT PlayerId, PlayerName, Wins, TotalMatches FROM TournamentResults WHERE TournamentId = %s", str(tournamentId))
 
     standings = cursor.fetchall()
     cursor.close()
@@ -131,8 +130,8 @@ def reportMatch(tournamentId, winner, loser):
         loser:  the id number of the player who lost
     """
     cursor = Database.cursor()
-    cursor.execute("UPDATE PlayerResults SET Wins = Wins+1 WHERE TournamentId = " + str(tournamentId) + " AND PlayerId = " + str(winner))
-    cursor.execute("UPDATE PlayerResults SET Losses = Losses+1 WHERE TournamentId = " + str(tournamentId) + " AND PlayerId = " + str(loser))
+    cursor.execute("UPDATE PlayerResults SET Wins = Wins+1, TotalMatches = TotalMatches+1 WHERE TournamentId = " + str(tournamentId) + " AND PlayerId = " + str(winner))
+    cursor.execute("UPDATE PlayerResults SET Losses = Losses+1, TotalMatches = TotalMatches+1 WHERE TournamentId = " + str(tournamentId) + " AND PlayerId = " + str(loser))
     cursor.close()
 
 def swissPairings(tournamentId):

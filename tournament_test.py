@@ -6,6 +6,12 @@ from tournament import *
 
 tournamentId = 1
 
+def testSetupTournaments():
+    createTournament('Card Games on Motorcycles')
+    createTournament('Who has the best moustache')
+    createTournament('Pie eating Contest')
+    print "0. Three tournaments setup"
+
 def testDeleteMatches():
     deleteMatches(tournamentId)
     print "1. Old matches can be deleted."
@@ -127,20 +133,20 @@ def testPairings():
     print "8. After one match, players with one win are paired."
 
 def testMultiTournament():
-    deleteMatches(0)
-    deleteMatches(0)
+    deleteMatches(2)
+    deleteMatches(2)
     deletePlayers(1)
     deletePlayers(1)
 
-    registerPlayer(0, "Mark Haynes")
-    registerPlayer(0, "Jacob Reynolds")
-    registerPlayer(0, "Sir Lancelot")
-    registerPlayer(0, "Snoop Dawg")
+    registerPlayer(2, "Mark Haynes")
+    registerPlayer(2, "Jacob Reynolds")
+    registerPlayer(2, "Sir Lancelot")
+    registerPlayer(2, "Snoop Dawg")
 
     registerPlayer(1, "Ken")
     registerPlayer(1, "Barbie")
 
-    c1 = countPlayers(0)
+    c1 = countPlayers(2)
     c2 = countPlayers(1)
 
     if (c1 != 4):
@@ -153,6 +159,7 @@ def testMultiTournament():
 
 
 if __name__ == '__main__':
+    #testSetupTournaments()
     testDeleteMatches()
     testDelete()
     testCount()
