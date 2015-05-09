@@ -4,26 +4,25 @@
 
 from tournament import *
 
-tournamentId = 1
-
 def testSetupTournaments():
+    deleteAllTournaments()
     createTournament('Card Games on Motorcycles')
     createTournament('Who has the best moustache')
     createTournament('Pie eating Contest')
     print "0. Three tournaments setup"
 
-def testDeleteMatches():
+def testDeleteMatches(tournamentId):
     deleteMatches(tournamentId)
     print "1. Old matches can be deleted."
 
 
-def testDelete():
+def testDelete(tournamentId):
     deleteMatches(tournamentId)
     deletePlayers(tournamentId)
     print "2. Player records can be deleted."
 
 
-def testCount():
+def testCount(tournamentId):
     deleteMatches(tournamentId)
     deletePlayers(tournamentId)
     c = countPlayers(tournamentId)
@@ -35,7 +34,7 @@ def testCount():
     print "3. After deleting, countPlayers() returns zero."
 
 
-def testRegister():
+def testRegister(tournamentId):
     deleteMatches(tournamentId)
     deletePlayers(tournamentId)
     registerPlayer(tournamentId, "Chandra Nalaar")
@@ -46,7 +45,7 @@ def testRegister():
     print "4. After registering a player, countPlayers() returns 1."
 
 
-def testRegisterCountDelete():
+def testRegisterCountDelete(tournamentId):
     deleteMatches(tournamentId)
     deletePlayers(tournamentId)
     registerPlayer(tournamentId, "Markov Chaney")
@@ -64,7 +63,7 @@ def testRegisterCountDelete():
     print "5. Players can be registered and deleted."
 
 
-def testStandingsBeforeMatches():
+def testStandingsBeforeMatches(tournamentId):
     deleteMatches(tournamentId)
     deletePlayers(tournamentId)
     registerPlayer(tournamentId, "Melpomene Murray")
@@ -87,7 +86,7 @@ def testStandingsBeforeMatches():
     print "6. Newly registered players appear in the standings with no matches."
 
 
-def testReportMatches():
+def testReportMatches(tournamentId):
     deleteMatches(tournamentId)
     deletePlayers(tournamentId)
     registerPlayer(tournamentId, "Bruno Walton")
@@ -109,7 +108,7 @@ def testReportMatches():
     print "7. After a match, players have updated standings."
 
 
-def testPairings():
+def testPairings(tournamentId):
     deleteMatches(tournamentId)
     deletePlayers(tournamentId)
     registerPlayer(tournamentId, "Twilight Sparkle")
@@ -132,41 +131,68 @@ def testPairings():
             "After one match, players with one win should be paired.")
     print "8. After one match, players with one win are paired."
 
+def testMultiPairing(tournamentId):
+    standings = playerStandings(tournamentId)
+    [id1, id2, id3, id4] = [row[0] for row in standings]
+
+    reportMatch(tournamentId, id1, id2)
+    reportMatch(tournamentId, id3, id4)
+
+    pairings = swissPairings(tournamentId)
+    if len(pairings) != 2:
+        raise ValueError(
+            str(tournamentId) + ": For four players, swissPairings should return two pairs.")
+    [(pid1, pname1, pid2, pname2), (pid3, pname3, pid4, pname4)] = pairings
+    correct_pairs = set([frozenset([id1, id3]), frozenset([id2, id4])])
+    actual_pairs = set([frozenset([pid1, pid2]), frozenset([pid3, pid4])])
+    if correct_pairs != actual_pairs:
+        raise ValueError(
+            "Tournament " + str(tournamentId) + ": After one match, players with one win should be paired.")
+
 def testMultiTournament():
-    deleteMatches(2)
-    deleteMatches(2)
-    deletePlayers(1)
-    deletePlayers(1)
 
-    registerPlayer(2, "Mark Haynes")
-    registerPlayer(2, "Jacob Reynolds")
-    registerPlayer(2, "Sir Lancelot")
-    registerPlayer(2, "Snoop Dawg")
+    t1 = getTournamentId('Card Games on Motorcycles')
+    t2 = getTournamentId('Who has the best moustache')
 
-    registerPlayer(1, "Ken")
-    registerPlayer(1, "Barbie")
+    registerPlayer(t1, "Ken")
+    registerPlayer(t1, "Barbie")
+    registerPlayer(t1, "Stacy's Mom")
+    registerPlayer(t1, "Stacy")
 
-    c1 = countPlayers(2)
-    c2 = countPlayers(1)
+    registerPlayer(t2, "Mark Haynes")
+    registerPlayer(t2, "Jacob Reynolds")
+    registerPlayer(t2, "Sir Lancelot")
+    registerPlayer(t2, "Snoop Dawg")
+
+    c1 = countPlayers(t1)
+    c2 = countPlayers(t2)
 
     if (c1 != 4):
-        raise ValueError("Tournament 0 should have 4 players, but " + str(c1) + " was found.")
+        raise ValueError("Tournament " + str(t1) + " should have 4 players, but " + str(c1) + " was found.")
 
-    if (c2 != 2):
-        raise ValueError("Tournament 1 should have 2 players, but " + str(c2) + " was found.")
+    if (c2 != 4):
+        raise ValueError("Tournament " + str(t2) + " should have 4 players, but " + str(c2) + " was found.")
 
-    print "9. Multiple tournaments are managed properly."
+    print "9. Multiple tournaments maintain counts properly."
 
+    testMultiPairing(t1)
+    testMultiPairing(t2)
+
+    print "10. Swiss pairings for multiple tournaments are correct."
 
 if __name__ == '__main__':
-    #testSetupTournaments()
-    testDeleteMatches()
-    testDelete()
-    testCount()
-    testRegister()
-    testRegisterCountDelete()
-    testStandingsBeforeMatches()
-    testReportMatches()
-    testPairings()
+    #Sets up 3 tournaments for testing
+    testSetupTournaments()
+
+    t0 = getTournamentId('Pie eating Contest')
+
+    testDeleteMatches(t0)
+    testDelete(t0)
+    testCount(t0)
+    testRegister(t0)
+    testRegisterCountDelete(t0)
+    testStandingsBeforeMatches(t0)
+    testReportMatches(t0)
+    testPairings(t0)
     testMultiTournament()
     print "Success!  All tests pass!"

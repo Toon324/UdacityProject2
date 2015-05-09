@@ -8,19 +8,26 @@ import bleach
 
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=results")
+    return psycopg2.connect("dbname=tournament")
 
-##Database
 Database = connect();
 
 """ A note on database design
 
-    To most effictively implement multi-tournament records, a table that contained a reference to tournament and player, along with Win/Loss/Tie stats was created.
-    The list of all players registered is stored in the PlayerName table, which links ID to Name. Clearing a tournament's players shouldn't remove ALL players,
-    and a player may wish to enter future tournaments without re-registering, so we leave the records in PlayerName untouched.
+    To most effictively implement multi-tournament records,
+    a table that contained a reference to tournament and player,
+    along with Win/Loss/Total Games was created.
 
-    A record in PlayerResults that matches tournamentId represents that a player is part of a tournament. This is created as 0/0/0 for W/L/T.
-    Therefore, since keeping track of players in a tournament and their matches are the same record, these methods do the same thing.
+    The list of all players registered is stored in the PlayerName table,
+    which links ID to Name.
+    Clearing a tournament's players shouldn't remove ALL players,
+    and a player may wish to enter future tournaments without re-registering,
+    so we leave the records in PlayerName untouched.
+
+    A record in PlayerResults that matches tournamentId represents that a player is part of a tournament.
+    This is created as 0/0/0 for W/L/T.
+    Therefore, since keeping track of players in a tournament and their matches are the same record,
+    these methods do the same thing.
 """
 
 def deleteMatches(tournamentId):
@@ -29,10 +36,42 @@ def deleteMatches(tournamentId):
     Args:
         tournamentId: The id of the tournament you would like to manipulate
     """
+
     cursor = Database.cursor()
     cursor.execute("UPDATE PlayerResults SET Wins = 0, Losses =0, TotalMatches = 0 WHERE TournamentId = " + str(tournamentId))
     cursor.close()
 
+    Database.commit()
+
+def getTournamentId(tournamentName):
+    """Returns the Id of a tournament based on it's name. Please note, this assumes each name is unique.
+
+    Args:
+        tournamentName: The name of the tournament you would like the Id of
+
+    Returns:
+        tournamentId: Id of tournament
+    """
+
+    cursor = Database.cursor()
+    cursor.execute("SELECT Id FROM TournamentNames WHERE TournamentName = '" + tournamentName + "'")
+
+    tournamentId = cursor.fetchone()[0]
+
+    cursor.close()
+
+    return tournamentId
+
+def deleteAllTournaments():
+    """Remove all the tournament records from the database.
+
+    """
+    cursor = Database.cursor()
+    cursor.execute("DELETE FROM PlayerResults")
+    cursor.execute("DELETE FROM TournamentNames")
+    cursor.close()
+
+    Database.commit()
 
 def deletePlayers(tournamentId):
     """Remove all the player records from the database.
@@ -41,8 +80,10 @@ def deletePlayers(tournamentId):
         tournamentId: The id of the tournament you would like to manipulate
     """
     cursor = Database.cursor()
-    cursor.execute("DELETE FROM PlayerResults WHERE TournamentId = %s", str(tournamentId))
+    cursor.execute("DELETE FROM PlayerResults WHERE TournamentId = " + str(tournamentId))
     cursor.close()
+
+    Database.commit()
 
 def countPlayers(tournamentId):
     """Returns the number of players currently registered.
@@ -51,9 +92,9 @@ def countPlayers(tournamentId):
         tournamentId: The id of the tournament you would like to manipulate
     """
     cursor = Database.cursor()
-    cursor.execute("SELECT COUNT(*) FROM PlayerResults WHERE TournamentId = %s", str(tournamentId))
+    cursor.execute("SELECT COUNT(*) FROM PlayerResults WHERE TournamentId = " + str(tournamentId))
 
-    count = cursor.fetchall()[0][0]
+    count = cursor.fetchone()[0]
 
     cursor.close()
 
@@ -80,6 +121,8 @@ def registerPlayer(tournamentId, name):
     cursor.execute("INSERT INTO PlayerResults (TournamentId, PlayerId, Wins, Losses, TotalMatches) VALUES (" + str(tournamentId) + ", " + str(playerId) + ", 0, 0, 0)")
     cursor.close()
 
+    Database.commit()
+
 def createTournament(name):
     """Adds a new tournament to the database.
 
@@ -95,6 +138,8 @@ def createTournament(name):
     cursor = Database.cursor()
     cursor.execute("INSERT INTO TournamentNames (TournamentName) VALUES (%s)", (bleach.clean(name),))
     cursor.close()
+
+    Database.commit()
 
 def playerStandings(tournamentId):
     """Returns a list of the players and their win records, sorted by wins.
@@ -114,7 +159,7 @@ def playerStandings(tournamentId):
     """
     cursor = Database.cursor()
 
-    cursor.execute("SELECT PlayerId, PlayerName, Wins, TotalMatches FROM TournamentResults WHERE TournamentId = %s", str(tournamentId))
+    cursor.execute("SELECT PlayerId, PlayerName, Wins, TotalMatches FROM TournamentResults WHERE TournamentId = " + str(tournamentId))
 
     standings = cursor.fetchall()
     cursor.close()
@@ -133,6 +178,8 @@ def reportMatch(tournamentId, winner, loser):
     cursor.execute("UPDATE PlayerResults SET Wins = Wins+1, TotalMatches = TotalMatches+1 WHERE TournamentId = " + str(tournamentId) + " AND PlayerId = " + str(winner))
     cursor.execute("UPDATE PlayerResults SET Losses = Losses+1, TotalMatches = TotalMatches+1 WHERE TournamentId = " + str(tournamentId) + " AND PlayerId = " + str(loser))
     cursor.close()
+
+    Database.commit()
 
 def swissPairings(tournamentId):
     """Returns a list of pairs of players for the next round of a match.
@@ -153,7 +200,7 @@ def swissPairings(tournamentId):
         name2: the second player's name
     """
     cursor = Database.cursor()
-    cursor.execute("SELECT PlayerId, PlayerName FROM TournamentResults WHERE TournamentId = %s", str(tournamentId))
+    cursor.execute("SELECT PlayerId, PlayerName FROM TournamentResults WHERE TournamentId = " + str(tournamentId))
 
     results = cursor.fetchall()
 

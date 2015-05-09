@@ -6,7 +6,7 @@
 -- You can write comments in this file by starting them with two dashes, like
 -- these lines here.
 
--- Not used by in any of the standard tests, but useful for displaying tournament results by a friendly name
+-- Relates a tournamentId to a name
 CREATE TABLE TournamentNames (
     Id serial primary key,
     TournamentName text
@@ -28,6 +28,14 @@ CREATE TABLE PlayerResults (
   );
 
 -- This view is used to display the results easily, and sorts players by wins
-CREATE VIEW TournamentResults AS SELECT TournamentId, PlayerId, PlayerName, Wins, Losses, TotalMatches from PlayerResults, PlayerNames
-WHERE PlayerResults.PlayerId = PlayerNames.Id
-ORDER BY Wins DESC;
+CREATE VIEW TournamentResults AS
+ SELECT TournamentId,
+            PlayerId,
+            PlayerName,
+            Wins,
+            Losses,
+            TotalMatches
+ FROM PlayerResults,
+      PlayerNames
+ WHERE PlayerResults.PlayerId = PlayerNames.Id
+ ORDER BY Wins DESC;
