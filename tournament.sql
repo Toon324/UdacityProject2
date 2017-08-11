@@ -1,41 +1,34 @@
 -- Table definitions for the tournament project.
 --
--- Put your SQL 'create table' statements in this file; also 'create view'
--- statements if you choose to use it.
---
--- You can write comments in this file by starting them with two dashes, like
--- these lines here.
 
--- Relates a tournamentId to a name
-CREATE TABLE TournamentNames (
+--  Contains Tournament information
+CREATE TABLE Tournaments (
     Id serial primary key,
-    TournamentName text
+    Name text
 );
 
--- Relates playerId to a name
-CREATE TABLE PlayerNames (
+-- Contains Player information
+CREATE TABLE Players (
   Id serial primary key,
-  PlayerName text
+  Name text
   );
 
 -- Contains records of players in a tournament, and their match history
 CREATE TABLE PlayerResults (
-  TournamentId integer references TournamentNames(Id),
-  PlayerId integer references PlayerNames(Id),
+  TournamentId integer references Tournaments(Id),
+  PlayerId integer references Players(Id),
   Wins integer,
-  Losses integer,
-  TotalMatches integer
+  Losses integer
   );
 
 -- This view is used to display the results easily, and sorts players by wins
 CREATE VIEW TournamentResults AS
  SELECT TournamentId,
-            PlayerId,
-            PlayerName,
+            Players.Id as PlayerId,
+            Players.Name as Name,
             Wins,
-            Losses,
-            TotalMatches
+            Losses
  FROM PlayerResults,
-      PlayerNames
- WHERE PlayerResults.PlayerId = PlayerNames.Id
+      Players
+ WHERE PlayerResults.PlayerId = Players.Id
  ORDER BY Wins DESC;
